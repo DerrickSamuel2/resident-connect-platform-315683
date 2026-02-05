@@ -1,0 +1,4 @@
+{
+    "command": "npm run test",
+    "working_directory": "/home/kavia/workspace/code-generation/resident-connect-platform-315683/resident_directory_frontend"
+}
