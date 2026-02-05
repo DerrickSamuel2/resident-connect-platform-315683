@@ -84,6 +84,7 @@ export default function MessagesPage() {
   useEffect(() => {
     // Connect WebSocket for realtime delivery
     const ws = createMessagingSocket({
+      conversationId: selectedId,
       onOpen: () => {
         // no-op
       },
@@ -91,14 +92,20 @@ export default function MessagesPage() {
         // non-fatal; REST still works
       },
       onMessage: (data) => {
-        // Try common patterns:
-        // { type: "message", message: {...} }
-        // or message object itself
-        const msg = data?.message || data;
+        // Backend broadcasts:
+        // { type: "message", conversation_id: "...", message: {...} }
+        // We normalize to the nested message but keep conversation_id if present.
+        const msg = data?.message ? { ...data.message, conversation_id: data.conversation_id } : data;
         if (!msg) return;
         if (!msg.conversation_id) return;
         if (msg.conversation_id !== selectedId) return;
-        setMessages((prev) => [...prev, msg]);
+
+        // Backend message uses sent_at; UI expects created_at (fallback).
+        const normalized = {
+          ...msg,
+          created_at: msg.created_at || msg.sent_at,
+        };
+        setMessages((prev) => [...prev, normalized]);
       },
     });
 
@@ -121,8 +128,7 @@ export default function MessagesPage() {
     try {
       wsRef.current.send(
         JSON.stringify({
-          type: "message.send",
-          conversation_id: selectedId,
+          type: "message",
           body: text,
         })
       );

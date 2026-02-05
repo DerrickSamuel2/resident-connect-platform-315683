@@ -7,27 +7,24 @@ import { authStore } from "../state/authStore";
  * We support configurable WS_BASE_URL and a few common paths.
  */
 
-function buildWsUrl() {
+function buildWsUrl({ conversationId }) {
   const base = WS_BASE_URL.replace(/\/$/, "");
-
-  // Common guesses; backend docs will clarify actual path.
-  const candidatePaths = ["/ws/messaging", "/ws", "/messaging/ws"];
-
   const token = authStore.getAccessToken();
-  for (const p of candidatePaths) {
-    const url = new URL(`${base}${p}`);
-    // Common pattern: token in query. If backend instead uses Authorization header,
-    // this won't work (browser WS can't set headers); backend likely supports query.
-    if (token) url.searchParams.set("token", token);
-    return url.toString();
-  }
-  return `${base}/ws`;
+
+  // Backend contract (see GET /docs/websocket on the FastAPI app):
+  //   /ws/messages?token=<ACCESS_JWT>&conversation_id=<UUID>
+  const url = new URL(`${base}/ws/messages`);
+
+  if (token) url.searchParams.set("token", token);
+  if (conversationId) url.searchParams.set("conversation_id", conversationId);
+
+  return url.toString();
 }
 
 // PUBLIC_INTERFACE
-export function createMessagingSocket({ onOpen, onClose, onError, onMessage }) {
+export function createMessagingSocket({ conversationId, onOpen, onClose, onError, onMessage }) {
   /** Create and return a WebSocket for real-time messaging. */
-  const wsUrl = buildWsUrl();
+  const wsUrl = buildWsUrl({ conversationId });
   const ws = new WebSocket(wsUrl);
 
   ws.addEventListener("open", (e) => onOpen && onOpen(e));
