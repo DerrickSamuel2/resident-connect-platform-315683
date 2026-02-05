@@ -1,13 +1,26 @@
-# Lightweight React Template for KAVIA
+# Resident Directory Frontend (React)
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+Responsive light-theme frontend for the Resident Directory App: auth, profile privacy controls, directory search, announcements/events, messaging (REST + WebSocket), admin tools, and GDPR requests.
+
+## Configuration (Environment Variables)
+
+Create React App variables (must start with `REACT_APP_`):
+
+- `REACT_APP_API_BASE_URL` (required): Backend REST API base, e.g. `http://localhost:3001`
+- `REACT_APP_WS_BASE_URL` (required): Backend WebSocket base, e.g. `ws://localhost:3001`
+
+See `.env.example`.
 
 ## Features
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+- Top navigation + mobile bottom navigation
+- Registration/Login (JWT access + refresh)
+- Profile view/edit with privacy & consent controls
+- Resident directory search with filters and resident detail panel
+- Announcements + events list; admin create actions (backend enforced)
+- Messaging UI with conversation list + history; realtime updates via WebSocket
+- Admin tools: user list + role/active updates, audit log view
+- GDPR: export/delete request creation + admin process delete helper
 
 ## Getting Started
 
