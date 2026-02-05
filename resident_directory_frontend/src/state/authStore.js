@@ -35,20 +35,40 @@ const state = {
   hydrated: false,
 };
 
+/**
+ * IMPORTANT:
+ * useSyncExternalStore requires that getSnapshot returns a value whose reference
+ * is stable unless the store *actually* changed.
+ *
+ * If getSnapshot returns a freshly-created object every time, React will treat
+ * it as "changed" on every render and can get into a forceStoreRerender loop.
+ */
+let snapshot = { ...state };
+
 const listeners = new Set();
 
-function emit() {
-  listeners.forEach((fn) => fn(getSnapshot()));
+function updateSnapshot() {
+  snapshot = { ...state };
 }
 
-function getSnapshot() {
-  return { ...state };
+function emit() {
+  // Notify subscribers; useSyncExternalStore doesn't use the argument, but
+  // other potential subscribers might.
+  listeners.forEach((fn) => fn(snapshot));
 }
 
 export const authStore = {
   subscribe(fn) {
     listeners.add(fn);
     return () => listeners.delete(fn);
+  },
+
+  /**
+   * Returns the current auth snapshot object.
+   * This reference only changes when the store updates.
+   */
+  getSnapshot() {
+    return snapshot;
   },
 
   hydrate() {
@@ -58,6 +78,7 @@ export const authStore = {
     state.refresh_token = data?.refresh_token || null;
     state.user = data?.user || null;
     state.hydrated = true;
+    updateSnapshot();
     emit();
   },
 
@@ -85,6 +106,7 @@ export const authStore = {
       refresh_token: state.refresh_token,
       user: state.user,
     });
+    updateSnapshot();
     emit();
 
     // Try to fetch /auth/me after token set
@@ -96,6 +118,7 @@ export const authStore = {
         refresh_token: state.refresh_token,
         user: state.user,
       });
+      updateSnapshot();
       emit();
     } catch {
       // Non-fatal; user can still navigate
@@ -107,6 +130,7 @@ export const authStore = {
     state.refresh_token = null;
     state.user = null;
     clear();
+    updateSnapshot();
     emit();
   },
 
@@ -121,6 +145,7 @@ export const authStore = {
         refresh_token: state.refresh_token,
         user: state.user,
       });
+      updateSnapshot();
       emit();
       return true;
     } catch {

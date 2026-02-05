@@ -4,12 +4,18 @@ import { authStore } from "./authStore";
 const AuthContext = createContext(null);
 
 function useAuthSnapshot() {
-  return useSyncExternalStore(authStore.subscribe, () => ({
-    accessToken: authStore.getAccessToken(),
-    refreshToken: authStore.getRefreshToken(),
-    user: authStore.getUser(),
-    isAuthed: authStore.isAuthed(),
-  }));
+  // IMPORTANT: getSnapshot must return a referentially-stable value unless state changes.
+  // authStore.getSnapshot() is updated only when the store mutates, preventing
+  // forceStoreRerender loops.
+  const snap = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot);
+
+  // Map internal state fields to context-friendly names.
+  return {
+    accessToken: snap.access_token,
+    refreshToken: snap.refresh_token,
+    user: snap.user,
+    isAuthed: Boolean(snap.access_token),
+  };
 }
 
 // PUBLIC_INTERFACE
